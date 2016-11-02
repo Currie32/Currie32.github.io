@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="d3-info.js"></script>
+    <style>
+
+    	#title { 
+    		text-align: center;
+    		font-size: 28px;
+    		padding: 0px;
+    		margin: -10px 0px 5px;
+    	}
+
+    	#description {
+    		text-align: center;
+    		font-style: italic;
+    		font-family: times;
+    		font-size: 18px;
+    		color: #444;
+    	}
+
+    	#disclaimer {
+    		font-size: 12px;
+    		text-align: right;
+    		margin: -5px 0px 0px;
+    		padding: 0px;
+    		font-style: italic;
+    	}
+
+    	#language_menu {
+    		position: absolute;
+	        text-align: center;
+	        width: 135px;
+	        top: 90px;
+	        left: -10px;
+      	}
+
+      	#language_menu li, #graph_menu li {
+	        background-color: #89D582;
+	        border: 1px solid #777;
+	        padding: 3px 0px;
+	        margin: 2px;
+	        list-style-type: none;
+	        border-radius: 5px;
+	        font-size: 16px;
+      	}
+
+      	#language_menu li:hover, #graph_menu li:hover {
+      		background-color: #63B15C;
+      	}
+
+      	#language_menu li.selected, #graph_menu li.selected {
+      		background-color: #32762C;
+      	}
+
+      	#graph_menu {
+      		position: absolute;
+   			text-align: center;
+   			right: 500px;
+   			top: 180px;
+      	}
+
+      	#graph_menu li {
+      		display: inline;
+      		padding: 3px 6px;
+      	}
+
+      	#graph_menu li:nth-child(2) {
+      		padding: 3px 8px;
+      	}
+
+      	.cities {
+      		fill: red;
+      		opacity: 0.7;
+      		stroke: darkred;
+      		stroke-width: 1px;
+      	}
+
+      	.map_tip, .province_tip, .graph_tip	{
+	      	border: 1px solid black;
+	      	border-radius: 10px;
+	      	position: absolute;
+      	}
+
+      	.map_tip, .province_tip {
+      		background-color: #E8E8E8;
+      		padding: 5px;
+      		top: 200px;
+      		left: 250px;
+      	}
+
+      	.graph_tip {
+      		background-color: #BBECEC;
+      		top: 40px;
+      		right: 20px;
+      		padding: 5px 10px;
+      		margin: 0px;
+      	}
+
+      	.map_tip p, .graph_tip p {
+      		margin: 5px 5px;
+      	}
+
+      	#province_tag { /* Province name in the graph_tip */
+      		color: #444086;
+      		text-align: center;
+      		font-size: 18px;
+      		font-weight: 600;
+      	} 
+
+      	.legend g:hover {
+      		text-decoration: underline;
+      	}
+
+      	.legend .selected {
+      		font-weight: bold;
+      	}
+
+      	body {
+      		background-color: #E8E8E8;
+      	}
+
+    </style>
+
+    <body>
+
+    	<div id="disclaimer">**Population data from the 2011 Canadian Census.</div>
+
+    	<div id="title">How Bilingual Is Canada?</div>
+
+    	<div id="description">
+    		Although many believe that Canadians typically speak two languages,<br>
+    		use these visualizations to see that speaking French is less common than 
+    		you may have expected.
+    	</div>
+
+		<div class="menu">
+			<ul id="language_menu"></ul>
+		</div>
+
+		<div class="menu">
+			<ul id="graph_menu"></ul>
+		</div>
+
+	</body>
+
+    <script type="text/javascript"> 
+
+    	var geo_data = "canada.geojson";
+    	var city_data = "canada_info_final.csv";
+    	var province_data_percentages = "province_info2.csv";
+    	var province_data_population = "province_info_population.csv"
+    	var language = "Population"; //The information used for the initial map
+    	var selected_graph_language = "Bilingual"; //the information used for the initial graph
+    	var graph_selected = "%"; //the information used for the initial graph
+    	var margin = 0,
+	        width = 1270 - margin,
+	        height = 570 - margin,
+	        scale0 = (width - 1)/ 3 / Math.PI;
+
+	    var number_format = d3.format(","); //include commas for longer numbers
+
+      	d3.json(geo_data, function (data) {
+	        "use strict";
+
+	        var svg = d3.select("body")
+	            .append("svg")
+	            .attr("width", width + margin)
+	            .attr("height", height + margin)
+	            .append('g')
+	            .attr('class', 'map');
+
+	        svg.append("bg") //changes the colour of the svg's background
+	        	.attr("class", "bg")
+    			.attr("width", "100%")
+			    .attr("height", "100%")
+			    .attr("fill", "#E8E8E8");
+
+			svg.append("text") //part 1 of map's advice
+				.attr("class", "map_advice", "advice")
+				.attr("x", "170px")
+				.attr("y", "515px")
+				.style("font-size", "13px")
+				.style("font-style", "italic")
+				.style("fill", "#444")
+				.text("**Zoom and drag just like with Google Maps,") 
+
+			svg.append("text") //part 2 of map's advice, written on 2 lines for better readability
+				.attr("class", "map_advice", "advice")
+				.attr("x", "190px")
+				.attr("y", "528px")
+				.style("font-size", "13px")
+				.style("font-style", "italic")
+				.style("fill", "#444")
+				.text("hover over the cities for more info") 
+
+			svg.append("text") //advice for how to interact with the graph
+				.attr("class", "graph_advice", "advice")
+				.attr("x", "890px")
+				.attr("y", "550px")
+				.style("font-size", "13px")
+				.style("font-style", "italic")
+				.style("fill", "#444")
+				.text("**Adjust graph using the legend, and hover over the bars for more info")
+
+	        var languages = ['Only English', //languages for the map menu
+	        				 'Only French',
+	        				 'Bilingual',
+	        				 'Neither',
+	        				 'Population'
+	        				 ];
+
+	        var graph_buttons = ['%', '#']; //buttons for graph's menu
+
+	        var graph_languages = ['Only English', //languages for graph's legend
+	        						'Only French',
+	        						'Bilingual',
+	        						'Neither'];
+
+	        var projection = d3.geoConicEquidistant() //where to place the map on the screen and how big the map is
+               .scale(750)
+               .translate( [width / 4.8, height * 1.66])
+               .rotate([105,0,0]);
+
+	        var path = d3.geoPath().projection(projection);
+
+	        var zoom = d3.zoom() //zooming and dragging function
+			    .scaleExtent([1, 40]);
+
+			var province_tip = d3.select("body") //pop-up for map, when you hover over cities
+				.append("div")
+			    .attr("class", "province_tip")
+			    .style("opacity", 0);
+
+	        var map = svg.selectAll('path') //details about the map
+	            .data(data.features)
+	            .enter()
+	            .append('path')
+	            .attr('class', 'path')
+	            .attr('d', path)
+	            .style('fill', 'lightblue')
+	            .style('stroke', 'black')
+	            .style('stroke-width', 0.5)
+	            .style('opacity', 0.7)
+	            .call(d3.zoom().on("zoom", function () {
+        			svg.attr("transform", d3.event.transform)
+				}))
+				.on('mouseover', function(d) { //province darkens and boundary becomes more bold when hovering over it
+					d3.select(this)
+						.style('opacity','1')
+						.style('stroke-width', 1);
+					province_tip.transition()
+			         	.style("opacity", .9)
+					province_tip.html(function(data) { //province name appears when hovering
+						return 	"<p><strong>Province:</strong> <span style='color:red'>" + 
+							(d.properties.NAME) + "</span></p>"
+					})
+				})
+				.on('mouseout', function(d) {
+					svg.selectAll('path')
+						.style('opacity','0.7')
+						.style('stroke-width', 0.5)
+					province_tip.transition()
+			         	.style("opacity", 0);
+				});
+			
+
+	        var radius = d3.scaleSqrt() //maximum size of a circle reached when population hits 1 million
+				.domain([0, 1000000])
+				.range([0,4]);
+
+			var map_tip = d3.select("body") //pop-up for map, when you hover over cities
+				.append("div")
+			    .attr("class", "map_tip")
+			    .style("opacity", 0);
+
+			d3.select('#language_menu') //language menu for map
+				.selectAll('li')
+				.data(languages)
+				.enter()
+				.append('li')
+				.text(function(d) {return d;})
+				.style('cursor', 'pointer')
+				.classed('selected', function(d) {
+					return d === language;
+				})
+				.on('click', function(d) { 
+					language = d;
+					d3.csv(city_data, updateMap); //new language selected is presented on the map
+					update_language_menu(); //new language selected has the darker shade of green
+				});
+
+			d3.select('#graph_menu') //graph menu for % and #
+				.selectAll('li')
+				.data(graph_buttons)
+				.enter()
+				.append('li')
+				.text(function(d) {return d;})
+				.style('cursor', 'pointer')
+				.classed('selected', function(d) {
+					return d === graph_selected;
+				})
+				.on('click', function(d) {
+					graph_selected = d;
+					update_graph_menu(); //new button selected has the darker shade of green
+					svg.selectAll(".serie") //must remove these elements to avoid layering
+						.remove()
+					svg.selectAll(".axis--x")
+						.remove()
+					svg.selectAll(".axis--y")
+						.remove()
+					svg.selectAll(".legend")
+						.remove()
+					if (d === "%") {return d3.csv(province_data_percentages, percent);} 
+					else {return d3.csv(province_data_population, number)}
+				});
+            
+            d3.csv(city_data, function(data) { //adds city circles to the map
+	            svg.append('g')
+	            	.attr("class", "cities")
+	            	.selectAll("circle")
+		           	.data(data)
+		           	.enter()
+		           	.append("circle")
+		           	.attr("cx", function(d) {
+		                return projection([+d.longitude, +d.latitude])[0];
+		           	})
+		           	.attr("cy", function(d) {
+		                return projection([+d.longitude, +d.latitude])[1];
+		           	})
+		           	.attr("r", function(d) {
+                    	return radius(d['Population']);
+               		})
+               		.style('cursor', 'pointer')
+					.on('mouseover', function(d) {
+						map_tip.transition()
+			         		.style("opacity", .9)
+						map_tip.html(function(data) { //provides information about the cities when hovering over them
+							return 	"<p><strong>City:</strong> <span style='color:red'>" + 
+									(d['city']) + "</span></p>" +
+									"<p><strong>Population:</strong> <span style='color:blue'>" + 
+									number_format((d['Population'])) + "</span></p>" +
+									"<p><strong>English Speakers:</strong> <span style='color:blue'>" +
+									number_format((d['Only English'])) + "</span></p>" +
+									"<p><strong>French Speakers:</strong> <span style='color:blue'>" + 
+									number_format((d['Only French'])) + "</span></p>" +
+									"<p><strong>Bilingual Speakers:</strong> <span style='color:blue'>" + 
+									number_format((d['Bilingual'])) + "</span></p>" +
+									"<p><strong>Neither:</strong> <span style='color:blue'>" + 
+									number_format((d['Neither'])) + "</span></p>";
+						});
+					})
+					.on("mouseout", function(d) {
+			   			map_tip.transition()
+			         		.style("opacity", 0)
+			         	})
+					.call(d3.zoom().on("zoom", function () { //allows cities to be zoomed in on along with map
+        				svg.attr("transform", d3.event.transform)
+					}));
+			});
+
+			function updateMap(data) { //redraws the circles on the map when a new language is chosen from the menu
+
+				d3.selectAll("circle") 
+					.remove()
+
+				svg.append('g')
+					.attr("class", "cities")
+					.selectAll("circle")
+					.data(data)
+					.enter()
+					.append("circle")
+					.attr("cx", function(d) {
+	                	return projection([+d.longitude, +d.latitude])[0];
+	           		})
+	           		.attr("cy", function(d) {
+	                	return projection([+d.longitude, +d.latitude])[1];
+	           		})
+	           		.attr("r", function(d) {
+                		return radius(d[language]);
+           			})
+           			.style('cursor', 'pointer')
+					.on('mouseover', function(d) {
+						map_tip.transition()
+			         		.style("opacity", .9)
+						map_tip.html(function(data) { //provides information about the cities when hovering over them
+							return 	"<p><strong>City:</strong> <span style='color:red'>" + 
+									(d['city']) + "</span></p>" +
+									"<p><strong>Population:</strong> <span style='color:blue'>" + 
+									number_format((d['Population'])) + "</span></p>" +
+									"<p><strong>English Speakers:</strong> <span style='color:blue'>" +
+									number_format((d['Only English'])) + "</span></p>" +
+									"<p><strong>French Speakers:</strong> <span style='color:blue'>" + 
+									number_format((d['Only French'])) + "</span></p>" +
+									"<p><strong>Bilingual Speakers:</strong> <span style='color:blue'>" + 
+									number_format((d['Bilingual'])) + "</span></p>" +
+									"<p><strong>Neither:</strong> <span style='color:blue'>" + 
+									number_format((d['Neither'])) + "</span></p>";
+						});
+					})
+					.on("mouseout", function(d) {
+			   			map_tip.transition()
+			         		.style("opacity", 0)
+			         	})
+					.call(d3.zoom().on("zoom", function () { //allows cities to be zoomed in on along with map
+        				svg.attr("transform", d3.event.transform)
+					}));
+		    };
+		    	
+			function update_language_menu() { //updates map's language menu when a different language is selected
+				d3.select('#language_menu')
+				.selectAll('li')
+				.classed('selected', function(d) {
+					return d === language;
+				});
+			};
+
+
+
+			//percent graph
+
+			function update_graph_menu() { //updates graph's menu (% and #) when a different option is selected
+				d3.select('#graph_menu')
+				.selectAll('li')
+				.classed('selected', function(d) {
+					return d === graph_selected;
+				});
+			};
+
+			function percent(error, data) { //draws the graph using the percent information
+			  	if (error) throw error;
+
+			  	var x = d3.scaleBand() //width of graph
+			    .rangeRound([750, width - 10])
+			    .padding(0.1);
+
+				var y = d3.scaleLinear() //height of graph
+				    .rangeRound([440, 140]);
+
+				var z = d3.scaleOrdinal()
+				    .range(["#353261", "#3D84A8", "#8ECBCB", "#5EB69A"]); //colours for the bars
+
+				var stack = d3.stack(); //creates stack bars for graph
+
+				var percent_format = d3.format(".2%"); //number on y-axis are percentages when % option is selected
+
+				var graph_tip = d3.select("body") //pop-up when hovering over bars
+					.append("div")
+				    .attr("class", "graph_tip")
+				    .style("opacity", 0);
+
+			  	data.sort(function(a, b) { return b[selected_graph_language] - a[selected_graph_language]; }); //sort by langauge selected from legend
+
+				x.domain(data.map(function(d) { return d.province; })); //loads provinces for x-axis
+				y.domain([0, 1]); //max height is 100%
+				z.domain(data.columns.slice(1)); //different stacks (languages) are different colours
+
+			  	svg.selectAll(".serie") //adds the stacks/languages
+			    	.data(stack.keys(data.columns.slice(1))(data))
+			    	.enter()
+			    	.append("g")
+			      	.attr("class", "serie")
+			      	.attr("fill", function(d) { return z(d.key); })
+				    .selectAll("rect")
+				    .data(function(d) { return d; })
+					    .enter()
+					    .append("rect")
+				      	.attr("x", function(d) { return x(d.data.province); })
+				      	.attr("y", function(d) { return y(d[1]); })
+				      	.attr("height", function(d) { return y(d[0]) - y(d[1]); })
+				      	.attr("width", x.bandwidth())
+				      	.on("mouseover", function(d) {
+				       		graph_tip.transition()
+				         		.style("opacity", 1);
+				       		graph_tip.html(function(data) { //provides province information when you hover over its stacks
+								return "<p id = province_tag><span>" + 
+										(d.data['province']) + "</span></p>" +
+										"<p><strong>Only English:</strong> <span style='color:blue'>" + 
+										percent_format((d.data['Only English'])) + "</span></p>" +
+										"<p><strong>Only French:</strong> <span style='color:blue'>" + 
+										percent_format((d.data['Only French'])) + "</span></p>" +
+										"<p><strong>Bilingual:</strong> <span style='color:blue'>" + 
+										percent_format((d.data['Bilingual'])) + "</span></p>" +
+										"<p><strong>Neither:</strong> <span style='color:blue'>" + 
+										percent_format((d.data['Neither'])) + "</span></p>";
+							});
+			   			})
+			   			.on("mouseout", function(d) {
+				   			graph_tip.transition()
+				         		.style("opacity", 0);
+			   			})
+
+			  	svg.append("g") //adds labels for the x-axis
+			      	.attr("class", "axis axis--x")
+			      	.attr("transform", "translate(0,450)")
+			      	.call(d3.axisBottom(x))
+			      	.selectAll('text')
+			      		.attr("transform", "rotate(55) translate(23,0)")
+			      		.style("font-size", "12px");
+
+			  	svg.append("g")
+				    .attr("class", "axis axis--y")
+				    .call(d3.axisLeft(y).ticks(5, "p"))
+				    .attr("transform", "translate(740,0)")
+				    .style("font-size", "12px")
+			    	.append("text") //y-axis label
+			      		.attr("x", 5)
+				      	.attr("y", y(y.ticks(5).pop()))
+				      	.attr("dy", "0.35em")
+				      	.attr("text-anchor", "start")
+				      	.attr("fill", "#000")
+				      	.attr("transform", "translate(-190,320) rotate(-90)")
+				      	.attr("font-size", "18px")
+				      	.text("Population")
+				      	.style("font-family", "times");
+
+			  	var legend = svg.selectAll(".legend") //adds the legend to the graph
+				    .data(data.columns.slice(1).reverse())
+				    .enter()
+				    .append("g")
+				    .attr("class", "legend")
+				    .attr("transform", function(d, i) { return "translate("+(i * (-108) -55) +",110)"; })
+				    .style("font-size", "14px");
+
+			  	legend.append("rect") //adds the colour boxes to the legend li
+			      	.attr("x", width - 18)
+			      	.attr("width", 18)
+			      	.attr("height", 18)
+			      	.attr("fill", z)
+			      	.style("stroke", "black");
+
+			  	legend.append("text") //the text for each legend li
+			      	.attr("x", width - 24)
+			      	.attr("y", 9)
+			      	.attr("dy", ".35em")
+			      	.attr("text-anchor", "end")
+			      	.text(function(d) { return d; })
+			      	.on('mouseover', function(d) { //underlines li when hovered over
+			      		d3.select(this).style("text-decoration", "underline")})
+			      	.on('mouseout', function(d) {
+			      		d3.select(this).style("text-decoration", "none")})
+			      	.style('cursor', 'pointer')
+			      	.classed('selected', function(d) { //selected li is bolded
+						return d === selected_graph_language;
+					})
+					.on('click', function(d) { 
+						selected_graph_language = d;
+						svg.selectAll(".serie") //must remove these items to prevent layering of text, text would become bolder
+							.remove()
+						svg.selectAll(".axis--x")
+							.remove()
+						svg.selectAll(".axis--y")
+							.remove()
+						svg.selectAll(".legend")
+							.remove()
+						if (graph_selected === "%") {return d3.csv(province_data_percentages, percent);} //alters graph depending on which li is selected
+						else {return d3.csv(province_data_population, number)}
+					});
+			};
+
+
+			function number(error, data) { //draws graph using population information
+			  	if (error) throw error;
+
+			  	var x = d3.scaleBand() //sets the width for the graph
+			    .rangeRound([750, width - 10])
+			    .padding(0.1);
+
+				var y = d3.scaleSqrt() //sets the height for the graph
+				    .rangeRound([440, 140]);
+
+				var z = d3.scaleOrdinal() //sets the colours for the bars
+				    .range(["#353261", "#3D84A8", "#8ECBCB", "#5EB69A"]);
+
+				var stack = d3.stack(); //the bars are stacked in the graph
+
+				var graph_tip = d3.select("body") //pop-up for information about the hovered province
+					.append("div")
+				    .attr("class", "graph_tip")
+				    .style("opacity", 0);
+
+			  	data.sort(function(a, b) { return b[selected_graph_language] - a[selected_graph_language]; }); //sorts provinces depending on selected language
+
+				x.domain(data.map(function(d) { return d.province; })); //x-axis labels are the provinces
+				y.domain([0, 13000000]); //max height; about the population of Ontario (Canada's most populated province)
+				z.domain(data.columns.slice(1)); //languages are the colour of the stacks
+
+			  	svg.selectAll(".serie") //adds the bars to the graph
+			    	.data(stack.keys(data.columns.slice(1))(data))
+			    	.enter()
+			    	.append("g")
+			      	.attr("class", "serie")
+			      	.attr("fill", function(d) { return z(d.key); })
+				    .selectAll("rect")
+				    .data(function(d) { return d; })
+					    .enter()
+					    .append("rect")
+				      	.attr("x", function(d) { return x(d.data.province); })
+				      	.attr("y", function(d) { return y(d[1]); })
+				      	.attr("height", function(d) { return y(d[0]) - y(d[1]); })
+				      	.attr("width", x.bandwidth())
+				      	.on("mouseover", function(d) {
+				       		graph_tip.transition()
+				         		.style("opacity", 1);
+				       		graph_tip.html(function(data) { //pop-up information about provinces when hovered over
+								return "<p id = province_tag><span>" + 
+										(d.data['province']) + "</span></p>" +
+										"<p><strong>Only English:</strong> <span style='color:blue'>" + 
+										number_format((d.data['Only English'])) + "</span></p>" +
+										"<p><strong>Only French:</strong> <span style='color:blue'>" + 
+										number_format((d.data['Only French'])) + "</span></p>" +
+										"<p><strong>Bilingual:</strong> <span style='color:blue'>" + 
+										number_format((d.data['Bilingual'])) + "</span></p>" +
+										"<p><strong>Neither:</strong> <span style='color:blue'>" + 
+										number_format((d.data['Neither'])) + "</span></p>";
+							});
+			   			})
+			   			.on("mouseout", function(d) {
+				   			graph_tip.transition()
+				         		.style("opacity", 0);
+			   			})
+
+			  	svg.append("g") //the x axis for the graph
+			      	.attr("class", "axis axis--x")
+			      	.attr("transform", "translate(0,450)")
+			      	.call(d3.axisBottom(x))
+			      	.selectAll('text')
+			      		.attr("transform", "rotate(55) translate(23,0)") //the ticks' names for the x axis
+			      		.style("font-size", "12px");;
+
+			  	svg.append("g") //the y axis for the graph
+				    .attr("class", "axis axis--y") //the ticks for the y axis
+				    .call(d3.axisLeft(y).ticks(5, "s"))
+				    .attr("transform", "translate(740,0)")
+				    .style("font-size", "12px")
+			    	.append("text") //the label for the y axis
+			      		.attr("x", 5)
+				      	.attr("y", y(y.ticks(5).pop()))
+				      	.attr("dy", "0.35em")
+				      	.attr("text-anchor", "start")
+				      	.attr("fill", "#000")
+				      	.attr("transform", "translate(-202,320) rotate(-90)")
+				      	.attr("font-size", "18px")
+				      	.text("Population") 
+				      	.style("font-family", "times");
+
+			  	var legend = svg.selectAll(".legend") //the legend for the graph
+				    .data(data.columns.slice(1).reverse())
+				    .enter()
+				    .append("g")
+				    .attr("class", "legend")
+				    .attr("transform", function(d, i) { return "translate("+(i * (-108) -55) +",110)"; })
+				    .style("font-size", "14px");
+
+			  	legend.append("rect") //the colour box for each legend li
+			      	.attr("x", width - 18)
+			      	.attr("width", 18)
+			      	.attr("height", 18)
+			      	.attr("fill", z)
+			      	.style("stroke", "black");
+
+			  	legend.append("text") //the text for each legend li
+			      	.attr("x", width - 24)
+			      	.attr("y", 9)
+			      	.attr("dy", ".35em")
+			      	.attr("text-anchor", "end")
+			      	.text(function(d) { return d; })
+			      	.on('mouseover', function(d) {
+			      		d3.select(this).style("text-decoration", "underline")})
+			      	.on('mouseout', function(d) {
+			      		d3.select(this).style("text-decoration", "none")})
+			      	.style('cursor', 'pointer')
+			      	.classed('selected', function(d) { //selected language from legend is bolded and presented on the graph
+						return d === selected_graph_language;
+					})
+					.on('click', function(d) { 
+						selected_graph_language = d;
+						svg.selectAll(".serie") //need to remove these to avoid layering - makes the text bolder and bolder.
+							.remove()
+						svg.selectAll(".axis--x")
+							.remove()
+						svg.selectAll(".axis--y")
+							.remove()
+						svg.selectAll(".legend")
+							.remove()
+						if (graph_selected === "%") {return d3.csv(province_data_percentages, percent);}
+						else {return d3.csv(province_data_population, number)}
+					});
+			};
+
+			d3.csv(province_data_percentages, percent) //draws the initial graph
+
+      	});
+			
+
+      </script>
+
+  </head>
+</html>
