@@ -1,0 +1,262 @@
+@media screen and (max-width: 400px) {
+	h2 {
+		font-size: 28px;
+	}
+
+	#titlebox h1 {
+		padding-top: 0px;
+	}
+
+	#aboutMe h2 {
+	margin-bottom: -27px;
+	}
+
+	#websiteLinks hr {
+		margin-top: -16px;
+	}
+
+	#workSamples object, #workSamples iframe, #workSamples a img {
+		height: 233px;
+	}
+
+	#workSamples p {
+		font-size: 14px;
+	}
+
+	#skills h2 {
+		margin-bottom: -5px;
+	}
+
+	#books h2, #podcasts h2, #investments h2 {
+		font-size: 35px;
+		margin-bottom: -8px;
+	}
+
+	#testimonials h2 {
+		margin-bottom: -25px;
+	}
+
+	#testimonials h4 {
+		font-size: 17px;
+		width: 90%;
+		text-align: center;
+	}
+}
+
+@media screen and (min-width: 600px) {
+	h2 {
+		font-size: 40px;
+	}
+
+	#titlebox {
+		margin-top: -41%;
+	}
+
+	#titlebox h1 {
+		font-size: 60px;
+	}
+
+	#titlebox h3 {
+		font-size: 30px;
+	}
+
+	#websiteLinks h4 {
+	font-size: 26px;
+	}
+
+	#websiteLinks h5{
+		font-size: 22px;
+	}
+
+	#workSamples h2 {
+		margin-bottom: -28px;
+	}
+
+	#workSamples object, #workSamples iframe, #workSamples a img {
+		height: 450px;
+	}
+
+	#skills h2 {
+		margin-bottom: -8px;
+	}
+
+	#books h2, #podcasts h2, #investments h2 {
+		font-size: 55px;
+		margin-bottom: -12px;
+	}
+
+	#testimonials h2 {
+		margin-bottom: -28px;
+	}
+}
+
+@media screen and (min-width: 700px) {
+	p {
+		font-size: 18px;
+	}
+}
+
+@media screen and (min-width: 800px) {
+	h2 {
+		font-size: 50px;
+	}
+
+	#aboutMe h2 {
+		margin-bottom: -31px;
+	}
+
+	#websiteLinks hr {
+		margin-top: -20px;
+	}
+
+	#workSamples h2 {
+		margin-bottom: -30px;
+	}
+
+	#skills h2 {
+		margin-bottom: -10px;
+	}
+
+	#workSamples object, #workSamples iframe, #workSamples a img {
+		height: 580px;
+	}
+
+	#books h2, #podcasts h2, #investments h2 {
+		font-size: 65px;
+		margin-bottom: -13px;
+	}
+	
+	#books img, #podcasts img {
+		height: 300px;
+	}
+
+	#investments ul {
+		height: 300px;
+		overflow-y: hidden;
+	}
+
+	#investments li {
+		width: 370px;
+	}
+
+	#investments img {
+		height: 300px;
+		width: 370px;
+	}
+
+	#ibb img {
+		height: 300px;
+	}
+
+	#ibbBG {
+		margin-bottom: -370px;
+		height: 370px;
+	}
+
+	.popup {
+		width: 370px;
+		height: 300px;
+	}
+
+	.popup p {
+		margin-top: -300px;
+		padding-top: 60px;
+	}
+
+	#testimonials h2 {
+		margin-bottom: -30px;
+	}
+}
+
+@media screen and (min-width: 900px) {
+
+	p {
+		font-size: 19px;
+	}
+
+	#websiteLinks h4 {
+		font-size: 30px;
+	}
+
+	#websiteLinks h5{
+		font-size: 25px;
+	}
+}
+
+@media screen and (min-width: 992px) {
+
+	#titlebox {
+		padding-bottom: 20px;
+		margin-top: -39.5%;
+	}
+
+	#titlebox h1 {
+		font-size: 70px;
+	}
+
+	#titlebox h3 {
+		font-size: 35px;
+	}
+
+	#websiteLinks h4, #websiteLinks h5 {
+		text-align: center;
+	}
+
+	#websiteLinks h5, #jobTitle {
+		font-size: 30px;
+		font-weight: 500;
+		margin-top: 40px;
+	}
+
+	#websiteLinks h5 {
+		padding: 0px;
+	}
+
+	#websiteLinks p {
+		width: 100%
+	}
+
+	#workExamples div {
+		width: 49.8%;
+		display: inline-block;
+	}
+
+	#workSamples p {
+		color: #333;
+		text-decoration: none;
+		margin: 0px;
+	}
+
+	#workSamples object, #workSamples iframe, #workSamples a img {
+		height: 365px;
+		display: inline-block;
+}
+
+@media screen and (min-width: 1100px) {
+	#workSamples object, #workSamples iframe, #workSamples a img {
+		height: 405px;
+}
+
+@media screen and (min-width: 1200px) {
+	#workSamples object, #workSamples iframe, #workSamples a img {
+		height: 440px;
+}
+
+@media screen and (min-width: 1250px) {
+	#workSamples object, #workSamples iframe, #workSamples a img {
+		height: 457px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
